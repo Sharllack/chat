@@ -1,0 +1,13 @@
+{
+  "name": "aula/mvc",
+  "autoload": {
+    "psr-4": {
+      "Name\\": "app/"
+    }
+  },
+  "require": {
+    "vlucas/phpdotenv": "*",
+    "william-costa/database-manager": "^0.1.0",
+    "cboden/ratchet": "^0.4.4"
+  }
+}

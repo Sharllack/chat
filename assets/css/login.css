@@ -1,0 +1,54 @@
+#form {
+  background-color: rgb(0, 0, 41);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#campos {
+  background-color: silver;
+  width: 300px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#campos h1 {
+  text-align: center;
+  color: rgb(0, 0, 41);
+}
+
+#campos input {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgb(0, 0, 41);
+  outline: none;
+  transition: 0.3s;
+}
+
+#campos input:focus {
+  border: 1px solid rgb(0, 0, 41);
+  box-shadow: 0 0 5px rgb(0, 0, 41);
+}
+
+#campos button {
+  cursor: pointer;
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgb(0, 0, 41);
+  background-color: rgb(0, 0, 41);
+  color: white;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+#campos button:hover {
+  background-color: white;
+  color: rgb(0, 0, 41);
+}

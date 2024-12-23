@@ -1,0 +1,118 @@
+#principal {
+  background-color: rgb(0, 0, 32);
+  height: 100vh;
+  width: 100vw;
+}
+
+#usuario {
+  background-color: rgb(39, 39, 39);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: white;
+  height: 50px;
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+
+#foto {
+  margin: 0 10px;
+}
+
+#foto img {
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  border-radius: 50%;
+}
+
+#mensagens {
+  margin: auto;
+  height: calc(100% - 110px);
+  width: 100%;
+}
+
+#mensagem {
+  margin: auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  background-color: rgb(0, 0, 32);
+}
+
+#mensagem input {
+  background-color: transparent;
+  width: 100%;
+  border-radius: 25px;
+  border: 1px darkgray solid;
+  color: white;
+}
+
+#mensagem button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  background-color: rgb(51, 121, 51);
+  border-radius: 50%;
+  border: none;
+  margin-left: 5px;
+}
+
+#mensagens {
+  display: flex;
+  flex-direction: column; /* Coloca as mensagens em uma coluna */
+  gap: 10px; /* Espaçamento entre mensagens */
+  padding: 10px;
+  overflow-x: auto;
+}
+
+#mensagens {
+  display: flex;
+  flex-direction: column; /* Coloca as mensagens em uma coluna */
+  gap: 10px; /* Espaçamento entre as mensagens */
+  padding: 10px;
+  overflow-y: auto; /* Permite rolagem se o conteúdo ultrapassar o tamanho da tela */
+}
+
+#mensagens div {
+  word-wrap: break-word; /* Quebra palavras longas se necessário */
+  text-align: start; /* Alinha o texto à esquerda */
+  margin: 5px 0; /* Espaçamento entre as mensagens */
+  padding: 10px; /* Padding para as mensagens */
+  border-radius: 10px; /* Bordas arredondadas */
+  max-width: 50%; /* Limita a largura das mensagens */
+  font-size: 16px; /* Tamanho de fonte para facilitar a leitura */
+  word-break: break-word; /* Garante que as palavras longas sejam quebradas */
+}
+
+.msg_user1 {
+  align-self: flex-start; /* Alinha mensagens do usuário atual à esquerda */
+  background-color: rgb(
+    39,
+    39,
+    39
+  ); /* Cor de fundo para mensagens do usuário atual */
+  color: white; /* Cor do texto */
+  border-radius: 10px; /* Bordas arredondadas */
+}
+
+.msg_user2 {
+  align-self: flex-end; /* Alinha mensagens de outros usuários à direita */
+  background-color: rgb(
+    56,
+    56,
+    56
+  ); /* Cor de fundo para mensagens de outros usuários */
+  color: white; /* Cor do texto */
+  border-radius: 10px; /* Bordas arredondadas */
+}
+
+@media (max-width: 600px) {
+  #mensagens div {
+    max-width: 90%; /* Mensagens ocupam mais espaço em telas menores */
+    font-size: 14px; /* Ajusta o tamanho da fonte para telas menores */
+  }
+}
