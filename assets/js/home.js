@@ -2,7 +2,7 @@ let socket;
 
 function connectWebSocket() {
   // Substitua "ws://localhost:8080" pelo endereço do seu servidor WebSocket
-  socket = new WebSocket("ws://localhost:8080");
+  socket = new WebSocket("wss://10f38be184ce.ngrok.app/chat/home");
 
   socket.onopen = function () {
     console.log("Conexão WebSocket estabelecida.");
@@ -67,14 +67,14 @@ function enviarMensagem() {
   $("#msg").val(""); // Limpa o campo de mensagem
 }
 
-$(document).ready(function () {
+jQuery(function () {
   connectWebSocket();
 
-  $("#send_button").click(() => {
+  $("#send_button").on("click", () => {
     enviarMensagem();
   });
 
-  $("#msg").keypress((event) => {
+  $("#msg").on("keypress", (event) => {
     if (event.which === 13) {
       enviarMensagem();
     }

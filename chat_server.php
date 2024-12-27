@@ -32,7 +32,6 @@ class ChatServer implements MessageComponentInterface
     public function onOpen(ConnectionInterface $conn)
     {
         $this->clients->attach($conn);
-
         echo "Nova conexão aberta ({$conn->resourceId})\n";
 
         // Log de cabeçalhos HTTP recebidos
@@ -113,6 +112,15 @@ class ChatServer implements MessageComponentInterface
 }
 
 // Inicializa o servidor WebSocket
+$context = [
+    'ssl' => [
+        'local_cert' => 'C:/Users/judoc/server_cert.pem',
+        'local_pk' => 'C:/Users/judoc/private_key.pem',
+        'allow_self_signed' => true,
+        'verify_peer' => false,
+    ],
+];
+
 $port = 8080;
 $server = IoServer::factory(
     new HttpServer(
@@ -121,7 +129,8 @@ $server = IoServer::factory(
         )
     ),
     $port,
-    '0.0.0.0'
+    '0.0.0.0',
+    $context // Aqui você aplica o SSL
 );
 
 echo "Servidor WebSocket rodando na porta {$port}\n";
