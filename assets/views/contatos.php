@@ -4,20 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="assets/css/contatos.css">
     <title>Document</title>
 </head>
 
 <body>
-    <section id="form">
-        <div id="campos">
-            <h1>Login</h1>
-            <input type="text" name="user" id="user">
-            <input type="password" name="pass" id="pass">
-            <button type="button" onclick="entrar()">Entrar</button>
+    <header>
+        <h1>LucasChat's</h1>
+        <div id="lupa">
+            <img src="assets/image/lupa.png" alt="lupa" id="lupa_img">
         </div>
+    </header>
+    <div id="search">
+        <input type="text" placeholder="Busque por um contato" id="search_contato">
+    </div>
+    <section id="contatos">
+
     </section>
-    <script src="assets/js/login.js"></script>
+    <script src="assets/js/contatos.js"></script>
+    <script src="assets/js/home.js"></script>
 </body>
 
 </html>

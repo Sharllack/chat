@@ -3,6 +3,7 @@
 namespace Name\Controllers;
 
 use Name\Core\Controller;
+use Name\Models\contatosModels;
 use Name\Models\loginModels;
 
 class contatosController extends Controller
@@ -12,11 +13,11 @@ class contatosController extends Controller
         $this->carregarTemplate("contatos");
     }
 
-    // public function abrir()
-    // {
-    //     $loginModels = new loginModels();
-    //     $resposta = $loginModels->abrir();
+    public function getContatos()
+    {
+        $contatosModels = new contatosModels();
+        $dados = $contatosModels->getContatos();
 
-    //     return $resposta;
-    // }
+        echo json_encode($dados);
+    }
 }

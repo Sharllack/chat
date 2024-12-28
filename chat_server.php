@@ -31,6 +31,14 @@ class ChatServer implements MessageComponentInterface
 
     public function onOpen(ConnectionInterface $conn)
     {
+        $queryString = $conn->httpRequest->getUri()->getQuery();
+        parse_str($queryString, $queryParams);
+
+        if (isset($queryParams['id_usuario2'])) {
+            $conn->id_usuario2 = $queryParams['id_usuario2'];
+            echo "Conexão iniciada com Id_usuario2: {$conn->id_usuario2}\n";
+        }
+
         $this->clients->attach($conn);
         echo "Nova conexão aberta ({$conn->resourceId})\n";
 
@@ -95,21 +103,39 @@ class ChatServer implements MessageComponentInterface
         }
 
         // Recuperação de mensagens ao conectar
-        // Recuperação de mensagens ao conectar
         if ($data['action'] === 'connect') {
             $idUsuario = $from->user_id;
+            $id_usuario2 = $from->id_usuario2;
 
-            $stmt = $this->db->prepare("SELECT mensagens.*, usuario.* 
-                FROM mensagens
-                JOIN usuario ON mensagens.id_usuario = usuario.id
-                WHERE (mensagens.id_usuario = :id_usuario OR mensagens.id_usuario != :id_usuario)
-                AND mensagens.status = 'ativo'
-                ORDER BY mensagens.data ASC");
-            $stmt->execute([':id_usuario' => $idUsuario]);
-            $mensagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // Consulta para obter os dados do usuário 2
+            $stmtUsuarios = $this->db->prepare("SELECT id, usuario, imagem 
+                                                FROM usuario 
+                                                WHERE id = :id_usuario2");
+            $stmtUsuarios->execute([':id_usuario2' => $id_usuario2]);
+            $usuario2 = $stmtUsuarios->fetch(PDO::FETCH_ASSOC);
+
+            // Consulta para obter as mensagens
+            $stmtMensagens = $this->db->prepare("SELECT mensagens.*, usuario.usuario, usuario.imagem 
+                                                 FROM mensagens
+                                                 JOIN usuario ON mensagens.id_usuario = usuario.id
+                                                 WHERE ((mensagens.id_usuario = :id_usuario AND mensagens.id_usuario2 = :id_usuario2)
+                                                    OR (mensagens.id_usuario = :id_usuario2 AND mensagens.id_usuario2 = :id_usuario))
+                                                 AND mensagens.status = 'ativo'
+                                                 ORDER BY mensagens.data ASC");
+            $stmtMensagens->execute([
+                ':id_usuario' => $idUsuario,
+                ':id_usuario2' => $id_usuario2
+            ]);
+            $mensagens = $stmtMensagens->fetchAll(PDO::FETCH_ASSOC);
+
+            // Combine os dados em uma única resposta
+            $response = [
+                'usuario2' => $usuario2,
+                'mensagens' => $mensagens
+            ];
 
             if (is_array($mensagens)) {
-                $from->send(json_encode($mensagens));
+                $from->send(json_encode($response));
             } else {
                 $from->send(json_encode(['error' => 'Não foi possível recuperar as mensagens']));
             }
@@ -118,47 +144,50 @@ class ChatServer implements MessageComponentInterface
         // Envio de mensagens
         if ($data['action'] === 'send_message') {
             $idUsuario = $from->user_id;
+            $id_usuario2 = $from->id_usuario2;
             $mensagem = htmlspecialchars($data['mensagem'], ENT_QUOTES, 'UTF-8');
 
-            $stmt = $this->db->prepare("INSERT INTO mensagens (id_usuario, mensagem, data) VALUES (:id_usuario, :mensagem, NOW())");
+            $stmt = $this->db->prepare("INSERT INTO mensagens (id_usuario, mensagem, data, id_usuario2) VALUES (:id_usuario, :mensagem, NOW(), :id_usuario2)");
             $stmt->execute([
                 ':id_usuario' => $idUsuario,
                 ':mensagem' => $mensagem,
+                ':id_usuario2' => $id_usuario2
             ]);
 
-            $stmt = $this->db->prepare("SELECT mensagens.*, usuario.*
-            FROM mensagens
-            JOIN usuario ON mensagens.id_usuario = usuario.id
-            WHERE mensagens.id_mensagem = :id_mensagem
-            AND mensagens.status = 'ativo'");
-            $stmt->execute([':id_mensagem' => $this->db->lastInsertId()]);
-            $messageData = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmtMensagens = $this->db->prepare("SELECT mensagens.*, usuario.usuario, usuario.imagem 
+                                                 FROM mensagens
+                                                 JOIN usuario ON mensagens.id_usuario = usuario.id
+                                                 WHERE mensagens.id_mensagem = :id_mensagem");
+            $stmtMensagens->execute([':id_mensagem' => $this->db->lastInsertId()]);
+            $novaMensagem = $stmtMensagens->fetch(PDO::FETCH_ASSOC);
 
+            $response = [
+                'usuario2' => null, // Pode ser preenchido com mais informações, se necessário
+                'mensagens' => [$novaMensagem], // Envia a mensagem recém-enviada
+            ];
+
+            // Enviar a nova mensagem para todos os clientes conectados
             foreach ($this->clients as $client) {
-                $client->send(json_encode($messageData));
+                $client->send(json_encode($response));
             }
         }
+
 
         //excluir mensagens
         if ($data['action'] === 'exclude_message') {
             $id_mensagem = $data['id_mensagem'];
 
-            // Atualize o status da mensagem corretamente
+            // Marca a mensagem como inativa no banco de dados
             $stmt = $this->db->prepare("UPDATE mensagens SET status = 'inativo' WHERE id_mensagem = :id_mensagem");
             $stmt->execute([':id_mensagem' => $id_mensagem]);
 
-            // Recupere as mensagens após a exclusão
-            $stmt = $this->db->prepare("SELECT mensagens.*, usuario.* 
-                                        FROM mensagens 
-                                        JOIN usuario ON mensagens.id_usuario = usuario.id
-                                        AND mensagens.status = 'ativo'
-                                        ORDER BY mensagens.data ASC");
-            $stmt->execute();
-            $message = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Envie a mensagem atualizada para todos os clientes conectados
+            // Envia apenas o ID da mensagem excluída
+            $response = [
+                'action' => 'exclude_message',
+                'id_mensagem' => $id_mensagem
+            ];
             foreach ($this->clients as $client) {
-                $client->send(json_encode($message));
+                $client->send(json_encode($response));
             }
         }
     }

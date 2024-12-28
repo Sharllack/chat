@@ -2,12 +2,20 @@ let socket;
 
 function connectWebSocket() {
   // Substitua "ws://localhost:8080" pelo endereço do seu servidor WebSocket
-  socket = new WebSocket("wss://730de984d0d1.ngrok.app/ws");
+  const id_usuario2 = sessionStorage.getItem("id_usuario2");
+  socket = new WebSocket(
+    `wss://730de984d0d1.ngrok.app/ws?id_usuario2=${id_usuario2}`
+  );
 
   socket.onopen = function () {
     console.log("Conexão WebSocket estabelecida.");
     const idUsuario = sessionStorage.getItem("id_usuario");
-    socket.send(JSON.stringify({ action: "connect", id_usuario: idUsuario }));
+    socket.send(
+      JSON.stringify({
+        action: "connect",
+        id_usuario: idUsuario,
+      })
+    );
     $("#fundo").css("display", "none");
   };
 
@@ -39,7 +47,9 @@ function connectWebSocket() {
   socket.onmessage = function (event) {
     const data = JSON.parse(event.data);
 
-    if (data.action === "online_users") {
+    if (data.action === "exclude_message") {
+      updateMensagens({ mensagens: [{ id_mensagem: data.id_mensagem }] }, true);
+    } else if (data.action === "online_users") {
       const onlineUsers = data.users;
       onlineUsers.forEach((userId) => {
         // Atualize a interface para mostrar os usuários online
@@ -89,32 +99,37 @@ function connectWebSocket() {
   };
 }
 
-function updateMensagens(mensagens, isExclusao = false) {
-  // Garante que 'mensagens' será um array, mesmo que não seja
-  mensagens = Array.isArray(mensagens) ? mensagens : [mensagens];
+function updateMensagens(data, excluir = false) {
+  const { usuario2, mensagens = [] } = data; // Define mensagens como array vazio por padrão
 
-  const idUsuario = parseInt(sessionStorage.getItem("id_usuario")); // Obtém o ID do usuário logado
-
-  // Se for uma exclusão de mensagem, limpa o conteúdo
-  if (isExclusao) {
-    $("#mensagens").empty();
+  // Atualize as informações do usuário 2 (foto e nome)
+  if (usuario2) {
+    $("#foto_user").attr("src", `assets/image_perfil/${usuario2.imagem}`);
+    $("#nome_user").text(usuario2.usuario);
   }
 
+  // Se for uma exclusão de mensagens
+  if (excluir) {
+    mensagens.forEach((mensagem) => {
+      $(`[data-id='${mensagem.id_mensagem}']`).remove();
+    });
+    return;
+  }
+
+  // Adicionar mensagens ao DOM
   mensagens.forEach((mensagem) => {
-    if (mensagem.id_usuario === idUsuario) {
+    if (!document.querySelector(`[data-id='${mensagem.id_mensagem}']`)) {
+      const msgClass =
+        mensagem.id_usuario == sessionStorage.getItem("id_usuario")
+          ? "msg_user2"
+          : "msg_user1";
       $("#mensagens").append(
-        `<div class="msg_user2" data-id="${mensagem.id_mensagem}">${mensagem.mensagem}</div>`
-      );
-    } else {
-      $("#foto_user").attr("src", "assets/image_perfil/" + mensagem.imagem);
-      $("#nome_user").text(mensagem.usuario);
-      $("#mensagens").append(
-        `<div class="msg_user1" data-id="${mensagem.id_mensagem}">${mensagem.mensagem}</div>`
+        `<div class="${msgClass}" data-id="${mensagem.id_mensagem}">${mensagem.mensagem}</div>`
       );
     }
   });
 
-  // Força o scroll para o final
+  // Scroll para o final
   const container = document.getElementById("mensagens");
   container.scrollTop = container.scrollHeight;
 }
@@ -215,19 +230,15 @@ function cancelarApagar() {
 }
 
 function apagarMensagem(id) {
-  $("#mensagens").empty();
-  const idUsuario = sessionStorage.getItem("id_usuario"); // Obtém o ID do usuário logado
+  const idUsuario = sessionStorage.getItem("id_usuario");
   const payload = {
     action: "exclude_message",
     id_mensagem: id,
-    id_usuario: idUsuario, // Envia o ID do usuário para garantir que a exclusão é permitida
+    id_usuario: idUsuario,
   };
 
   socket.send(JSON.stringify(payload));
   $("#apagar_msg").css("display", "none");
-
-  // Remova a mensagem do DOM, se for a mensagem com o id correspondente
-  $(`div[data-id='${id}']`).remove();
 }
 
 jQuery(function () {

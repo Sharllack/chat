@@ -22,7 +22,7 @@ function entrar() {
       if (response.status == "success") {
         // Armazena o id_usuario na sessão ou localStorage
         sessionStorage.setItem("id_usuario", response.id_usuario);
-        window.location.href = "home"; // Redireciona para a página inicial
+        window.location.href = "contatos"; // Redireciona para a página inicial
       } else {
         alert(response.mensagem);
       }
