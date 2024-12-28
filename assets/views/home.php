@@ -9,6 +9,17 @@
 </head>
 
 <body>
+    <div id="apagar_msg">
+        <div id="apagar_msg2">
+            <p>Apagar mensagem?</p>
+            <div id="btns">
+
+            </div>
+        </div>
+    </div>
+    <div id="fundo">
+        <div id="fundo_img" ondurationchange=""></div>
+    </div>
     <section id="principal">
         <section id="usuario">
             <div id="foto">
@@ -16,6 +27,10 @@
             </div>
             <div id="nome">
                 <p id="nome_user"></p>
+                <div id="digi"></div>
+            </div>
+            <div id="status">
+                <div id="status2"></div>
             </div>
         </section>
         <section id="mensagens">

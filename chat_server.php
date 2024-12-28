@@ -34,11 +34,34 @@ class ChatServer implements MessageComponentInterface
         $this->clients->attach($conn);
         echo "Nova conexão aberta ({$conn->resourceId})\n";
 
-        // Log de cabeçalhos HTTP recebidos
+        // Suponha que o user_id seja enviado no cabeçalho
         $headers = $conn->httpRequest->getHeaders();
-        echo "Cabeçalhos recebidos:\n";
-        foreach ($headers as $key => $values) {
-            echo "$key: " . implode(', ', $values) . "\n";
+        $userId = $headers['User-ID'][0] ?? null; // Substitua por como você obtém o user_id
+        $conn->user_id = $userId;
+
+        echo "Usuário conectado com ID: {$userId}\n";
+
+        // Enviar lista de usuários online para o novo cliente
+        $onlineUsers = [];
+        foreach ($this->clients as $client) {
+            if ($client !== $conn && isset($client->user_id)) {
+                $onlineUsers[] = $client->user_id;
+            }
+        }
+
+        $conn->send(json_encode([
+            'action' => 'online_users',
+            'users' => $onlineUsers,
+        ]));
+
+        // Notificar outros clientes que um novo usuário entrou
+        foreach ($this->clients as $client) {
+            if ($client !== $conn) {
+                $client->send(json_encode([
+                    'action' => 'user_joined',
+                    'user_id' => $userId,
+                ]));
+            }
         }
     }
 
@@ -51,19 +74,36 @@ class ChatServer implements MessageComponentInterface
             return;
         }
 
-        if (isset($data['id_usuario'])) {
+        // Verifica se o ID do usuário já foi associado para evitar repetição
+        if (!isset($from->user_id) && isset($data['id_usuario'])) {
             $from->user_id = $data['id_usuario'];
             echo "Usuário conectado: {$from->user_id}\n";
         }
 
+        // Gerenciamento de status "digitando"
+        if ($data['action'] === 'typing' || $data['action'] === 'stop_typing') {
+
+            foreach ($this->clients as $client) {
+                if ($client !== $from) {
+                    $client->send(json_encode([
+                        'action' => $data['action'],
+                        'user_id' => $from->user_id,
+                    ]));
+                }
+            }
+            return; // Não continua processando como mensagem normal
+        }
+
+        // Recuperação de mensagens ao conectar
+        // Recuperação de mensagens ao conectar
         if ($data['action'] === 'connect') {
             $idUsuario = $from->user_id;
 
-            $stmt = $this->db->prepare("SELECT mensagens.*, usuario.*
+            $stmt = $this->db->prepare("SELECT mensagens.*, usuario.* 
                 FROM mensagens
                 JOIN usuario ON mensagens.id_usuario = usuario.id
-                WHERE mensagens.id_usuario = :id_usuario
-                   OR mensagens.id_usuario != :id_usuario
+                WHERE (mensagens.id_usuario = :id_usuario OR mensagens.id_usuario != :id_usuario)
+                AND mensagens.status = 'ativo'
                 ORDER BY mensagens.data ASC");
             $stmt->execute([':id_usuario' => $idUsuario]);
             $mensagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -75,6 +115,7 @@ class ChatServer implements MessageComponentInterface
             }
         }
 
+        // Envio de mensagens
         if ($data['action'] === 'send_message') {
             $idUsuario = $from->user_id;
             $mensagem = htmlspecialchars($data['mensagem'], ENT_QUOTES, 'UTF-8');
@@ -86,9 +127,10 @@ class ChatServer implements MessageComponentInterface
             ]);
 
             $stmt = $this->db->prepare("SELECT mensagens.*, usuario.*
-                FROM mensagens
-                JOIN usuario ON mensagens.id_usuario = usuario.id
-                WHERE mensagens.id = :id_mensagem");
+            FROM mensagens
+            JOIN usuario ON mensagens.id_usuario = usuario.id
+            WHERE mensagens.id_mensagem = :id_mensagem
+            AND mensagens.status = 'ativo'");
             $stmt->execute([':id_mensagem' => $this->db->lastInsertId()]);
             $messageData = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -96,12 +138,46 @@ class ChatServer implements MessageComponentInterface
                 $client->send(json_encode($messageData));
             }
         }
+
+        //excluir mensagens
+        if ($data['action'] === 'exclude_message') {
+            $id_mensagem = $data['id_mensagem'];
+
+            // Atualize o status da mensagem corretamente
+            $stmt = $this->db->prepare("UPDATE mensagens SET status = 'inativo' WHERE id_mensagem = :id_mensagem");
+            $stmt->execute([':id_mensagem' => $id_mensagem]);
+
+            // Recupere as mensagens após a exclusão
+            $stmt = $this->db->prepare("SELECT mensagens.*, usuario.* 
+                                        FROM mensagens 
+                                        JOIN usuario ON mensagens.id_usuario = usuario.id
+                                        AND mensagens.status = 'ativo'
+                                        ORDER BY mensagens.data ASC");
+            $stmt->execute();
+            $message = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Envie a mensagem atualizada para todos os clientes conectados
+            foreach ($this->clients as $client) {
+                $client->send(json_encode($message));
+            }
+        }
     }
 
     public function onClose(ConnectionInterface $conn)
     {
+        $userId = $conn->user_id ?? null; // Obtenha o ID do usuário, se estiver definido
         $this->clients->detach($conn);
         echo "Conexão encerrada ({$conn->resourceId})\n";
+
+        if ($userId) {
+            // Notifica todos os clientes que o usuário desconectou
+            foreach ($this->clients as $client) {
+                $client->send(json_encode([
+                    'action' => 'user_left',
+                    'user_id' => $userId, // ID do usuário que desconectou
+                ]));
+            }
+        }
     }
 
     public function onError(ConnectionInterface $conn, \Exception $e)

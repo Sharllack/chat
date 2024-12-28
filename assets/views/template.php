@@ -23,7 +23,6 @@
     <footer>
         <h1></h1>
     </footer>
-    <script src="assets/js/template.js"></script>
 </body>
 
 </html>
