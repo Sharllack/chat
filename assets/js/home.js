@@ -23,7 +23,7 @@ function connectWebSocket() {
   let typingTimeout;
 
   function notifyTyping(isTyping) {
-    const idUsuario = sessionStorage.getItem("id_usuario");
+    const idUsuario = sessionStorage.getItem("id_usuario2");
     socket.send(
       JSON.stringify({
         action: isTyping ? "typing" : "stop_typing",
@@ -119,12 +119,18 @@ function updateMensagens(data, excluir = false) {
   // Adicionar mensagens ao DOM
   mensagens.forEach((mensagem) => {
     if (!document.querySelector(`[data-id='${mensagem.id_mensagem}']`)) {
+      const dataHora = new Date(mensagem.data.replace(" ", "T")); // Ajusta o formato para ISO 8601
+      // Converte a string para um objeto Date
+      const horaFormatada = dataHora.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
       const msgClass =
         mensagem.id_usuario == sessionStorage.getItem("id_usuario")
           ? "msg_user2"
           : "msg_user1";
       $("#mensagens").append(
-        `<div class="${msgClass}" data-id="${mensagem.id_mensagem}">${mensagem.mensagem}</div>`
+        `<div class="${msgClass}" data-id="${mensagem.id_mensagem}">${mensagem.mensagem}<span class="hora" style="font-size: .7em;">${horaFormatada}</span></div>`
       );
     }
   });

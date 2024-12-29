@@ -198,6 +198,7 @@
   text-align: start; /* Alinha o texto à esquerda */
   margin: 5px 0; /* Espaçamento entre as mensagens */
   padding: 10px; /* Padding para as mensagens */
+  padding-bottom: 15px;
   border-radius: 10px; /* Bordas arredondadas */
   max-width: 50%; /* Limita a largura das mensagens */
   font-size: 16px; /* Tamanho de fonte para facilitar a leitura */
@@ -215,6 +216,7 @@
   border-radius: 10px; /* Bordas arredondadas */
   cursor: pointer;
   user-select: none;
+  position: relative;
 }
 
 .msg_user2 {
@@ -228,6 +230,14 @@
   border-radius: 10px; /* Bordas arredondadas */
   cursor: pointer;
   user-select: none;
+  position: relative;
+}
+
+.hora {
+  position: absolute;
+  bottom: 2px;
+  right: 5px;
+  color: darkgray;
 }
 
 @media (max-width: 600px) {
