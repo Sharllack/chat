@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Obtenha o ID da mensagem a partir do atributo 'data-id'
       const mensagemId = target.getAttribute("data-id");
       mostrarBotaoApagar(mensagemId); // Passa o id da mensagem para a função de exibição dos botões
-    }, 2000); // 2 segundos
+    }, 1000); // 2 segundos
   }
 
   function cancelarTemporizador() {
